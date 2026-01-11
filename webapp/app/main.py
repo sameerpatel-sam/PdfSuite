@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timedelta
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request, Form
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -142,7 +142,7 @@ async def merge_pdfs(request: Request, files: List[UploadFile] = File(...), pref
     if prefer_link:
         token = store_download(output_buffer.getvalue(), "application/pdf", output_filename)
         url = request.url_for("download_token", token=token)
-        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+        return JSONResponse(content={"download_url": url})
     return StreamingResponse(output_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
@@ -200,7 +200,7 @@ async def split_pdf(request: Request, file: UploadFile = File(...), pages: str =
     if prefer_link:
         token = store_download(zip_buffer.getvalue(), "application/zip", output_filename)
         url = request.url_for("download_token", token=token)
-        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+        return JSONResponse(content={"download_url": url})
     return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
@@ -236,7 +236,7 @@ async def compress_pdf(request: Request, file: UploadFile = File(...), prefer_li
     if prefer_link:
         token = store_download(output_buffer.getvalue(), "application/pdf", output_filename)
         url = request.url_for("download_token", token=token)
-        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+        return JSONResponse(content={"download_url": url})
     return StreamingResponse(output_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
@@ -271,7 +271,7 @@ async def pdf_to_jpg(request: Request, file: UploadFile = File(...), prefer_link
     if prefer_link:
         token = store_download(zip_buffer.getvalue(), "application/zip", output_filename)
         url = request.url_for("download_token", token=token)
-        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+        return JSONResponse(content={"download_url": url})
     return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
@@ -488,7 +488,7 @@ async def pdf_to_word(request: Request, file: UploadFile = File(...), prefer_lin
     if prefer_link:
         token = store_download(output_buffer.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", output_filename)
         url = request.url_for("download_token", token=token)
-        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+        return JSONResponse(content={"download_url": url})
     return StreamingResponse(output_buffer, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
