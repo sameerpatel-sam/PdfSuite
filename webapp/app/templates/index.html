@@ -381,14 +381,7 @@
                         if (navigator.share && navigator.canShare) {
                             var file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
                             if (navigator.canShare({ files: [file] })) {
-                                navigator.share({ files: [file], title: filename }).then(function() {
-                                    successMsg.textContent = '✅ Done!';
-                                    successMsg.classList.remove('hidden');
-                                }).catch(function(err) {
-                                    // Share cancelled or failed, navigate to blob
-                                    var url = URL.createObjectURL(blob);
-                                    window.location.href = url;
-                                });
+                                navigator.share({ files: [file], title: filename });
                                 return;
                             }
                         }
