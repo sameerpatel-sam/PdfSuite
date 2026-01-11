@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PdfSuite - PDF Utilities</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tool-card { transition: all 0.2s ease; }
+        .tool-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .loading { display: none; }
+        .loading.active { display: flex; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl font-bold mb-2">📄 PdfSuite</h1>
+            <p class="text-blue-100">Free PDF Tools - All Processing Done Securely In Your Browser</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-10">
+        <!-- Tool Selection Grid -->
+        <div id="tool-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            
+            <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-blue-500" onclick="showTool('merge')">
+                <div class="text-4xl mb-3">🔗</div>
+                <h3 class="text-xl font-semibold text-gray-800">Merge PDF</h3>
+                <p class="text-gray-500 text-sm mt-1">Combine multiple PDFs into one file</p>
+            </div>
+
+            <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-green-500" onclick="showTool('split')">
+                <div class="text-4xl mb-3">✂️</div>
+                <h3 class="text-xl font-semibold text-gray-800">Split PDF</h3>
+                <p class="text-gray-500 text-sm mt-1">Extract specific pages or ranges</p>
+            </div>
+
+            <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-yellow-500" onclick="showTool('compress')">
+                <div class="text-4xl mb-3">📦</div>
+                <h3 class="text-xl font-semibold text-gray-800">Compress PDF</h3>
+                <p class="text-gray-500 text-sm mt-1">Reduce file size while keeping quality</p>
+            </div>
+
+            <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-purple-500" onclick="showTool('pdf-to-jpg')">
+                <div class="text-4xl mb-3">🖼️</div>
+                <h3 class="text-xl font-semibold text-gray-800">PDF to JPG</h3>
+                <p class="text-gray-500 text-sm mt-1">Convert each page to an image</p>
+            </div>
+
+            <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-red-500" onclick="showTool('pdf-to-word')">
+                <div class="text-4xl mb-3">📝</div>
+                <h3 class="text-xl font-semibold text-gray-800">PDF to Word</h3>
+                <p class="text-gray-500 text-sm mt-1">Convert PDF to editable DOCX</p>
+            </div>
+
+            <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-teal-500" onclick="showTool('word-to-pdf')">
+                <div class="text-4xl mb-3">📑</div>
+                <h3 class="text-xl font-semibold text-gray-800">Word to PDF</h3>
+                <p class="text-gray-500 text-sm mt-1">Convert DOCX to PDF format</p>
+            </div>
+        </div>
+
+        <!-- Tool Forms (hidden by default) -->
+        <div id="tool-form" class="hidden max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-8">
+            <button onclick="goBack()" class="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1">
+                <span>←</span> Back to tools
+            </button>
+
+            <h2 id="form-title" class="text-2xl font-bold text-gray-800 mb-6"></h2>
+
+            <form id="upload-form" enctype="multipart/form-data">
+                <!-- File Upload Area -->
+                <div id="file-drop" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                    <div class="text-4xl mb-3">📁</div>
+                    <p class="text-gray-600 mb-2">Drag & drop files here or</p>
+                    <label class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-blue-700">
+                        Choose Files
+                        <input type="file" id="file-input" class="hidden" accept=".pdf,.docx">
+                    </label>
+                    <p class="text-gray-400 text-sm mt-2">Max 50 MB per file</p>
+                </div>
+
+                <!-- Selected Files List -->
+                <div id="file-list" class="mt-4 space-y-2"></div>
+
+                <!-- Page Range Input (for split) -->
+                <div id="pages-input" class="hidden mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Page Ranges</label>
+                    <input type="text" name="pages" id="pages" placeholder="e.g., 1-3, 5, 7-10" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-gray-400 text-xs mt-1">Separate ranges with commas</p>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submit-btn" 
+                        class="w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed" 
+                        disabled>
+                    Process
+                </button>
+            </form>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading items-center justify-center mt-6 text-blue-600">
+                <svg class="animate-spin h-6 w-6 mr-2" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span>Processing your file...</span>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-msg" class="hidden mt-4 p-4 bg-red-50 text-red-700 rounded-lg"></div>
+
+            <!-- Success Message -->
+            <div id="success-msg" class="hidden mt-4 p-4 bg-green-50 text-green-700 rounded-lg"></div>
+        </div>
+    </main>
+
+    <footer class="text-center py-6 text-gray-400 text-sm">
+        <p>All files are processed in-memory. No data is stored on our servers.</p>
+    </footer>
+
+    <script>
+        // Tool configurations
+        const tools = {
+            'merge': {
+                title: '🔗 Merge PDF',
+                endpoint: '/api/merge',
+                accept: '.pdf',
+                multiple: true,
+                needsPages: false,
+                minFiles: 2
+            },
+            'split': {
+                title: '✂️ Split PDF',
+                endpoint: '/api/split',
+                accept: '.pdf',
+                multiple: false,
+                needsPages: true,
+                minFiles: 1
+            },
+            'compress': {
+                title: '📦 Compress PDF',
+                endpoint: '/api/compress',
+                accept: '.pdf',
+                multiple: false,
+                needsPages: false,
+                minFiles: 1
+            },
+            'pdf-to-jpg': {
+                title: '🖼️ PDF to JPG',
+                endpoint: '/api/pdf-to-jpg',
+                accept: '.pdf',
+                multiple: false,
+                needsPages: false,
+                minFiles: 1
+            },
+            'pdf-to-word': {
+                title: '📝 PDF to Word',
+                endpoint: '/api/pdf-to-word',
+                accept: '.pdf',
+                multiple: false,
+                needsPages: false,
+                minFiles: 1
+            },
+            'word-to-pdf': {
+                title: '📑 Word to PDF',
+                endpoint: '/api/word-to-pdf',
+                accept: '.docx',
+                multiple: false,
+                needsPages: false,
+                minFiles: 1
+            }
+        };
+
+        let currentTool = null;
+        let selectedFiles = [];
+
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const submitBtn = document.getElementById('submit-btn');
+        const pagesInput = document.getElementById('pages-input');
+        const uploadForm = document.getElementById('upload-form');
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('error-msg');
+        const successMsg = document.getElementById('success-msg');
+
+        function showTool(toolId) {
+            currentTool = tools[toolId];
+            selectedFiles = [];
+
+            document.getElementById('tool-grid').classList.add('hidden');
+            document.getElementById('tool-form').classList.remove('hidden');
+            document.getElementById('form-title').textContent = currentTool.title;
+
+            // Configure file input
+            fileInput.accept = currentTool.accept;
+            fileInput.multiple = currentTool.multiple;
+
+            // Show/hide page range input
+            pagesInput.classList.toggle('hidden', !currentTool.needsPages);
+
+            // Reset state
+            fileList.innerHTML = '';
+            submitBtn.disabled = true;
+            errorMsg.classList.add('hidden');
+            successMsg.classList.add('hidden');
+        }
+
+        function goBack() {
+            document.getElementById('tool-grid').classList.remove('hidden');
+            document.getElementById('tool-form').classList.add('hidden');
+            currentTool = null;
+            selectedFiles = [];
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (currentTool.multiple) {
+                selectedFiles = [...selectedFiles, ...files];
+            } else {
+                selectedFiles = files;
+            }
+            updateFileList();
+        });
+
+        function updateFileList() {
+            fileList.innerHTML = selectedFiles.map((f, i) => `
+                <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                    <span class="text-gray-700 truncate">${f.name}</span>
+                    <button type="button" onclick="removeFile(${i})" class="text-red-500 hover:text-red-700">✕</button>
+                </div>
+            `).join('');
+
+            submitBtn.disabled = selectedFiles.length < currentTool.minFiles;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        // Drag and drop
+        const fileDrop = document.getElementById('file-drop');
+        fileDrop.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDrop.classList.add('border-blue-500', 'bg-blue-50');
+        });
+        fileDrop.addEventListener('dragleave', () => {
+            fileDrop.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        fileDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDrop.classList.remove('border-blue-500', 'bg-blue-50');
+            const files = Array.from(e.dataTransfer.files);
+            if (currentTool.multiple) {
+                selectedFiles = [...selectedFiles, ...files];
+            } else {
+                selectedFiles = files.slice(0, 1);
+            }
+            updateFileList();
+        });
+
+        // Form submission
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorMsg.classList.add('hidden');
+            successMsg.classList.add('hidden');
+            loading.classList.add('active');
+            submitBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                
+                if (currentTool.multiple) {
+                    selectedFiles.forEach(f => formData.append('files', f));
+                } else {
+                    formData.append('file', selectedFiles[0]);
+                }
+
+                if (currentTool.needsPages) {
+                    const pages = document.getElementById('pages').value;
+                    if (!pages.trim()) {
+                        throw new Error('Please enter page ranges');
+                    }
+                    formData.append('pages', pages);
+                }
+
+                const response = await fetch(currentTool.endpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Processing failed');
+                }
+
+                // Download the result
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'download';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename=([^;]+)/);
+                    if (match) filename = match[1].trim();
+                }
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                successMsg.textContent = '✅ Done! Your file has been downloaded.';
+                successMsg.classList.remove('hidden');
+
+            } catch (err) {
+                errorMsg.textContent = '❌ ' + err.message;
+                errorMsg.classList.remove('hidden');
+            } finally {
+                loading.classList.remove('active');
+                submitBtn.disabled = selectedFiles.length < currentTool.minFiles;
+            }
+        });
+    </script>
+</body>
+</html>
