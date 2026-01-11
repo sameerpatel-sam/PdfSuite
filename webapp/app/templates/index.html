@@ -359,7 +359,7 @@
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', currentTool.endpoint, true);
                     xhr.responseType = 'blob';
-                    xhr.onload = function() {
+                    xhr.onload = async function() {
                         loading.classList.remove('active');
                         submitBtn.disabled = false;
                         if (xhr.status >= 200 && xhr.status < 300) {
@@ -368,11 +368,29 @@
                             let filename = 'download';
                             const match = cd.match(/filename=([^;]+)/);
                             if (match) filename = match[1].trim();
-                            // Open blob URL in new window to trigger native viewer/download
+                            
+                            // Try Web Share API with files first (most reliable on mobile)
+                            if ('share' in navigator && 'canShare' in navigator) {
+                                try {
+                                    const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+                                    if (navigator.canShare({ files: [file] })) {
+                                        await navigator.share({ files: [file], title: filename });
+                                        successMsg.textContent = '✅ Shared! Use "Save to Files" in the share sheet.';
+                                        successMsg.classList.remove('hidden');
+                                        return;
+                                    }
+                                } catch (shareErr) {
+                                    // User cancelled or share failed, continue to fallback
+                                    if (shareErr.name !== 'AbortError') {
+                                        console.log('Share failed:', shareErr);
+                                    }
+                                }
+                            }
+                            
+                            // Fallback: navigate to blob URL directly
                             const url = URL.createObjectURL(blob);
-                            window.open(url, '_blank');
-                            successMsg.textContent = '✅ Done! Use Share or Open In to save the file.';
-                            successMsg.classList.remove('hidden');
+                            window.location.href = url;
+                            // Note: page will navigate away, but if it previews, user can use native controls
                         } else {
                             errorMsg.textContent = '❌ Processing failed. Please try again.';
                             errorMsg.classList.remove('hidden');
