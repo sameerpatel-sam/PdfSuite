@@ -333,6 +333,14 @@
             submitBtn.disabled = true;
 
             try {
+                // Validate files first
+                if (!selectedFiles.length) {
+                    throw new Error('Please select a file');
+                }
+                if (currentTool.minFiles && selectedFiles.length < currentTool.minFiles) {
+                    throw new Error('Please select at least ' + currentTool.minFiles + ' file(s)');
+                }
+
                 const mobile = isMobileDevice();
                 const inApp = isInAppBrowser();
 
