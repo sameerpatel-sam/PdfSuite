@@ -336,8 +336,7 @@
                 const mobile = isMobileDevice();
                 const inApp = isInAppBrowser();
 
-                // In-app browser fallback: build a fresh FormData and submit via hidden iframe
-                // or use XMLHttpRequest to stream the response as a download.
+                // In-app browser fallback: use fetch with simpler handling
                 if (inApp) {
                     if (currentTool.needsPages) {
                         const pagesVal = document.getElementById('pages').value;
@@ -348,61 +347,61 @@
                     // Build FormData manually with selected files
                     const fd = new FormData();
                     if (currentTool.multiple) {
-                        selectedFiles.forEach(f => fd.append('files', f));
+                        selectedFiles.forEach(function(f) { fd.append('files', f); });
                     } else {
                         fd.append('file', selectedFiles[0]);
                     }
                     if (currentTool.needsPages) {
                         fd.append('pages', document.getElementById('pages').value);
                     }
-                    // Use XHR with responseType blob to trigger download
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', currentTool.endpoint, true);
-                    xhr.responseType = 'blob';
-                    xhr.onload = async function() {
-                        loading.classList.remove('active');
-                        submitBtn.disabled = false;
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            const blob = xhr.response;
-                            const cd = xhr.getResponseHeader('Content-Disposition') || '';
-                            let filename = 'download';
-                            const match = cd.match(/filename=([^;]+)/);
-                            if (match) filename = match[1].trim();
-                            
-                            // Try Web Share API with files first (most reliable on mobile)
-                            if ('share' in navigator && 'canShare' in navigator) {
-                                try {
-                                    const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
-                                    if (navigator.canShare({ files: [file] })) {
-                                        await navigator.share({ files: [file], title: filename });
-                                        successMsg.textContent = '✅ Shared! Use "Save to Files" in the share sheet.';
-                                        successMsg.classList.remove('hidden');
-                                        return;
-                                    }
-                                } catch (shareErr) {
-                                    // User cancelled or share failed, continue to fallback
-                                    if (shareErr.name !== 'AbortError') {
-                                        console.log('Share failed:', shareErr);
-                                    }
-                                }
-                            }
-                            
-                            // Fallback: navigate to blob URL directly
-                            const url = URL.createObjectURL(blob);
-                            window.location.href = url;
-                            // Note: page will navigate away, but if it previews, user can use native controls
-                        } else {
-                            errorMsg.textContent = '❌ Processing failed. Please try again.';
-                            errorMsg.classList.remove('hidden');
+                    
+                    // Use fetch and handle response
+                    fetch(currentTool.endpoint, {
+                        method: 'POST',
+                        body: fd
+                    }).then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Processing failed');
                         }
-                    };
-                    xhr.onerror = function() {
+                        var cd = response.headers.get('Content-Disposition') || '';
+                        var filename = 'download';
+                        var match = cd.match(/filename=([^;]+)/);
+                        if (match) filename = match[1].trim();
+                        return response.blob().then(function(blob) {
+                            return { blob: blob, filename: filename };
+                        });
+                    }).then(function(result) {
                         loading.classList.remove('active');
                         submitBtn.disabled = false;
-                        errorMsg.textContent = '❌ Network error. Please try again.';
+                        
+                        var blob = result.blob;
+                        var filename = result.filename;
+                        
+                        // Try Web Share API first
+                        if (navigator.share && navigator.canShare) {
+                            var file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+                            if (navigator.canShare({ files: [file] })) {
+                                navigator.share({ files: [file], title: filename }).then(function() {
+                                    successMsg.textContent = '✅ Shared! Use "Save to Files" in the share sheet.';
+                                    successMsg.classList.remove('hidden');
+                                }).catch(function(err) {
+                                    // Share cancelled or failed, navigate to blob
+                                    var url = URL.createObjectURL(blob);
+                                    window.location.href = url;
+                                });
+                                return;
+                            }
+                        }
+                        
+                        // Fallback: navigate to blob URL
+                        var url = URL.createObjectURL(blob);
+                        window.location.href = url;
+                    }).catch(function(err) {
+                        loading.classList.remove('active');
+                        submitBtn.disabled = false;
+                        errorMsg.textContent = '❌ ' + (err.message || 'Processing failed. Please try again.');
                         errorMsg.classList.remove('hidden');
-                    };
-                    xhr.send(fd);
+                    });
                     return;
                 }
 
