@@ -191,6 +191,13 @@
             };
         }
 
+        function isMobileDevice() {
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPad|iPhone|iPod/.test(ua) || (/(Macintosh)/.test(ua) && 'ontouchstart' in window);
+            const isAndroid = /Android/.test(ua);
+            return isIOS || isAndroid;
+        }
+
         function getDownloadLocationMessage() {
             const { os } = detectPlatform();
             if (os === 'iOS') {
@@ -345,13 +352,25 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
+                // iOS Safari often ignores programmatic downloads of Blob URLs.
+                // Open in a new tab so the Share/Save UI appears.
+                const { os } = detectPlatform();
+                const mobile = isMobileDevice();
+                if (mobile) {
+                    a.target = '_blank';
+                }
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
                 // Show helpful message about where the file is typically saved
-                successMsg.textContent = '✅ Done! ' + getDownloadLocationMessage();
+                const mobileNote = mobile
+                    ? (os === 'iOS'
+                        ? ' If it opens in a new tab, tap Share → Save to Files.'
+                        : ' If it opens in a new tab, use your browser’s Download/Save option to save it.')
+                    : '';
+                successMsg.textContent = '✅ Done! ' + getDownloadLocationMessage() + mobileNote;
                 successMsg.classList.remove('hidden');
 
             } catch (err) {
