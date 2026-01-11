@@ -324,7 +324,7 @@
         });
 
         // Form submission
-        uploadForm.addEventListener('submit', async (e) => {
+        uploadForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             errorMsg.classList.add('hidden');
@@ -341,8 +341,8 @@
                     throw new Error('Please select at least ' + currentTool.minFiles + ' file(s)');
                 }
 
-                const mobile = isMobileDevice();
-                const inApp = isInAppBrowser();
+                var mobile = isMobileDevice();
+                var inApp = isInAppBrowser();
 
                 // In-app browser fallback: use fetch with simpler handling
                 if (inApp) {
@@ -410,7 +410,10 @@
                     return;
                 }
 
-                const formData = new FormData();
+                // Standard browser path - wrap in async IIFE
+                (async function() {
+                    try {
+                        const formData = new FormData();
                 
                 if (currentTool.multiple) {
                     selectedFiles.forEach(f => formData.append('files', f));
@@ -497,12 +500,19 @@
                 successMsg.textContent = '✅ Done! ' + getDownloadLocationMessage() + mobileNote;
                 successMsg.classList.remove('hidden');
 
+                    } catch (err) {
+                        errorMsg.textContent = '❌ ' + err.message;
+                        errorMsg.classList.remove('hidden');
+                    } finally {
+                        loading.classList.remove('active');
+                        submitBtn.disabled = false;
+                    }
+                })();
             } catch (err) {
                 errorMsg.textContent = '❌ ' + err.message;
                 errorMsg.classList.remove('hidden');
-            } finally {
                 loading.classList.remove('active');
-                submitBtn.disabled = selectedFiles.length < currentTool.minFiles;
+                submitBtn.disabled = false;
             }
         });
     </script>
