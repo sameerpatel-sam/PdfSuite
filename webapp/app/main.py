@@ -829,7 +829,7 @@ async def word_to_pdf(request: Request, file: UploadFile = File(...), prefer_lin
     if prefer_link:
         token = store_download(output_buffer.getvalue(), "application/pdf", output_filename)
         url = request.url_for("download_token", token=token)
-        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+        return JSONResponse(content={"download_url": url})
     return StreamingResponse(output_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 

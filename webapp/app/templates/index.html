@@ -334,6 +334,24 @@
                 const mobile = isMobileDevice();
                 const inApp = isInAppBrowser();
 
+                // In-app browser fallback: submit the form natively so the response triggers
+                // the browser’s built-in download/open behavior.
+                if (inApp) {
+                    if (currentTool.needsPages) {
+                        const pagesVal = document.getElementById('pages').value;
+                        if (!pagesVal.trim()) {
+                            throw new Error('Please enter page ranges');
+                        }
+                    }
+                    uploadForm.setAttribute('action', currentTool.endpoint);
+                    uploadForm.setAttribute('method', 'POST');
+                    uploadForm.setAttribute('enctype', 'multipart/form-data');
+                    loading.classList.remove('active');
+                    submitBtn.disabled = false;
+                    uploadForm.submit();
+                    return;
+                }
+
                 const formData = new FormData();
                 
                 if (currentTool.multiple) {
@@ -350,10 +368,7 @@
                     formData.append('pages', pages);
                 }
 
-                // In in-app browsers on mobile, ask server to return a download URL
-                if (inApp && mobile) {
-                    formData.append('prefer_link', 'true');
-                }
+                // For standard browsers, use fetch and client-side download
 
                 const response = await fetch(currentTool.endpoint, {
                     method: 'POST',
