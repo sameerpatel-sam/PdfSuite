@@ -256,6 +256,8 @@
             // Configure file input
             fileInput.accept = currentTool.accept;
             fileInput.multiple = currentTool.multiple;
+            // Set name for native form submit (in-app browser fallback)
+            fileInput.name = currentTool.multiple ? 'files' : 'file';
 
             // Show/hide page range input
             pagesInput.classList.toggle('hidden', !currentTool.needsPages);
@@ -334,8 +336,8 @@
                 const mobile = isMobileDevice();
                 const inApp = isInAppBrowser();
 
-                // In-app browser fallback: submit the form natively so the response triggers
-                // the browser’s built-in download/open behavior.
+                // In-app browser fallback: build a fresh FormData and submit via hidden iframe
+                // or use XMLHttpRequest to stream the response as a download.
                 if (inApp) {
                     if (currentTool.needsPages) {
                         const pagesVal = document.getElementById('pages').value;
@@ -343,12 +345,46 @@
                             throw new Error('Please enter page ranges');
                         }
                     }
-                    uploadForm.setAttribute('action', currentTool.endpoint);
-                    uploadForm.setAttribute('method', 'POST');
-                    uploadForm.setAttribute('enctype', 'multipart/form-data');
-                    loading.classList.remove('active');
-                    submitBtn.disabled = false;
-                    uploadForm.submit();
+                    // Build FormData manually with selected files
+                    const fd = new FormData();
+                    if (currentTool.multiple) {
+                        selectedFiles.forEach(f => fd.append('files', f));
+                    } else {
+                        fd.append('file', selectedFiles[0]);
+                    }
+                    if (currentTool.needsPages) {
+                        fd.append('pages', document.getElementById('pages').value);
+                    }
+                    // Use XHR with responseType blob to trigger download
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', currentTool.endpoint, true);
+                    xhr.responseType = 'blob';
+                    xhr.onload = function() {
+                        loading.classList.remove('active');
+                        submitBtn.disabled = false;
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const blob = xhr.response;
+                            const cd = xhr.getResponseHeader('Content-Disposition') || '';
+                            let filename = 'download';
+                            const match = cd.match(/filename=([^;]+)/);
+                            if (match) filename = match[1].trim();
+                            // Open blob URL in new window to trigger native viewer/download
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                            successMsg.textContent = '✅ Done! Use Share or Open In to save the file.';
+                            successMsg.classList.remove('hidden');
+                        } else {
+                            errorMsg.textContent = '❌ Processing failed. Please try again.';
+                            errorMsg.classList.remove('hidden');
+                        }
+                    };
+                    xhr.onerror = function() {
+                        loading.classList.remove('active');
+                        submitBtn.disabled = false;
+                        errorMsg.textContent = '❌ Network error. Please try again.';
+                        errorMsg.classList.remove('hidden');
+                    };
+                    xhr.send(fd);
                     return;
                 }
 
