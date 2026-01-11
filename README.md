@@ -5,6 +5,20 @@ A simple .NET CLI for common PDF tasks on Windows:
 - Split a PDF into single-page files
 - Extract text from PDFs
 
+## Web App (FastAPI)
+This repo also includes a colorful web app for PDF utilities under [webapp](webapp). It runs on FastAPI and is the recommended UI moving forward.
+
+### Run
+```powershell
+Push-Location "c:\Users\samee\source\repos\PdfSuite\webapp"
+$env:PYTHONPATH=$PWD
+& "C:/Users/samee/source/repos/PdfSuite/.venv/Scripts/python.exe" -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+```
+Open http://localhost:8001
+
+### Note on PdfWeb
+There is a legacy prototype under [PdfWeb](PdfWeb) with a simpler UI and different dependencies (e.g., `pdf2image`). If you are standardizing on the colorful app in [webapp](webapp), you can ignore `PdfWeb/` or remove it to avoid confusion.
+
 ## Prerequisites
 - .NET SDK 8 or 9 (latest recommended)
 

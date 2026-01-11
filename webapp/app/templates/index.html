@@ -178,6 +178,39 @@
         let currentTool = null;
         let selectedFiles = [];
 
+        // --- Platform detection and download location hint ---
+        function detectPlatform() {
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            const isMac = /Macintosh|Mac OS X/.test(ua);
+            const isWindows = /Windows/.test(ua);
+            const isLinux = /Linux/.test(ua) && !isAndroid;
+            return {
+                os: isIOS ? 'iOS' : isAndroid ? 'Android' : isMac ? 'macOS' : isWindows ? 'Windows' : isLinux ? 'Linux' : 'Unknown'
+            };
+        }
+
+        function getDownloadLocationMessage() {
+            const { os } = detectPlatform();
+            if (os === 'iOS') {
+                return 'Saved to Files app → Downloads (or iCloud Drive → Downloads).';
+            }
+            if (os === 'Android') {
+                return 'Saved to the Downloads folder (check Files/Downloads).';
+            }
+            if (os === 'Windows') {
+                return 'Saved to your Downloads folder (default browser location).';
+            }
+            if (os === 'macOS') {
+                return 'Saved to your Downloads folder (default browser location).';
+            }
+            if (os === 'Linux') {
+                return 'Saved to your Downloads folder (default browser location).';
+            }
+            return 'Saved to your browser’s default Downloads folder.';
+        }
+
         const fileInput = document.getElementById('file-input');
         const fileList = document.getElementById('file-list');
         const submitBtn = document.getElementById('submit-btn');
@@ -317,7 +350,8 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                successMsg.textContent = '✅ Done! Your file has been downloaded.';
+                // Show helpful message about where the file is typically saved
+                successMsg.textContent = '✅ Done! ' + getDownloadLocationMessage();
                 successMsg.classList.remove('hidden');
 
             } catch (err) {
