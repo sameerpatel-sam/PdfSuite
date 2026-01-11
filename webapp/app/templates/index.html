@@ -22,19 +22,6 @@
     </header>
 
     <main class="container mx-auto px-4 py-10">
-        <!-- In-App Browser Warning -->
-        <div id="inapp-warning" class="hidden max-w-5xl mx-auto mb-6 p-4 rounded-lg bg-yellow-50 text-yellow-800 border border-yellow-200">
-            <div class="flex items-start gap-3">
-                <div>⚠️</div>
-                <div>
-                    <p id="inapp-msg" class="mb-3">Downloads may be limited inside in‑app browsers. Please open this link in Safari or Chrome to save files.</p>
-                    <div class="flex gap-3">
-                        <button id="copy-link-btn" class="px-4 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-700">Copy Link</button>
-                        <a id="open-external-hint" href="#" class="px-4 py-2 rounded-md bg-white border border-yellow-300 text-yellow-800">How to open externally</a>
-                    </div>
-                </div>
-            </div>
-        </div>
         <!-- Tool Selection Grid -->
         <div id="tool-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             
@@ -211,48 +198,10 @@
             return isIOS || isAndroid;
         }
 
-        function detectInAppBrowser() {
+        // Minimal in-app browser detection (true for common social app webviews)
+        function isInAppBrowser() {
             const ua = navigator.userAgent || '';
-            const isLinkedIn = /LinkedInApp/i.test(ua);
-            const isInstagram = /Instagram/i.test(ua);
-            const isFacebook = /(FBAN|FBAV)/i.test(ua);
-            const isTwitter = /Twitter/i.test(ua);
-            const isPinterest = /Pinterest/i.test(ua);
-            const isSnapchat = /Snapchat/i.test(ua);
-            const inApp = isLinkedIn || isInstagram || isFacebook || isTwitter || isPinterest || isSnapchat;
-            let name = 'this app';
-            if (isLinkedIn) name = 'LinkedIn';
-            else if (isInstagram) name = 'Instagram';
-            else if (isFacebook) name = 'Facebook';
-            else if (isTwitter) name = 'Twitter';
-            else if (isPinterest) name = 'Pinterest';
-            else if (isSnapchat) name = 'Snapchat';
-            return { inApp, name };
-        }
-
-        function showInAppWarningIfNeeded() {
-            const warn = detectInAppBrowser();
-            const isMobile = isMobileDevice();
-            const container = document.getElementById('inapp-warning');
-            const msg = document.getElementById('inapp-msg');
-            const hint = document.getElementById('open-external-hint');
-            const copyBtn = document.getElementById('copy-link-btn');
-            if (warn.inApp && isMobile) {
-                msg.textContent = `Downloads may be limited inside ${warn.name}’s in‑app browser. Please open this link in Safari or Chrome to save files.`;
-                hint.onclick = (e) => {
-                    e.preventDefault();
-                    alert(`Tips:\n\n• In ${warn.name}: Use the Share or … menu → Open in browser (Safari/Chrome).\n• Or copy the link and paste into Safari/Chrome.`);
-                };
-                copyBtn.onclick = async () => {
-                    try {
-                        await navigator.clipboard.writeText(window.location.href);
-                        alert('Link copied. Open Safari/Chrome and paste to continue.');
-                    } catch (e) {
-                        alert('Could not copy automatically. Long‑press the address bar to copy the URL.');
-                    }
-                };
-                container.classList.remove('hidden');
-            }
+            return /LinkedInApp|Instagram|FBAN|FBAV|Twitter|Pinterest|Snapchat/i.test(ua);
         }
 
         function canShareFile(blob, filename) {
@@ -294,8 +243,7 @@
         const errorMsg = document.getElementById('error-msg');
         const successMsg = document.getElementById('success-msg');
 
-        // Show in-app browser warning on load if needed
-        document.addEventListener('DOMContentLoaded', showInAppWarningIfNeeded);
+        // No banner; we handle in-app with a server-side download URL fallback
 
         function showTool(toolId) {
             currentTool = tools[toolId];
@@ -383,8 +331,8 @@
             submitBtn.disabled = true;
 
             try {
-                // Open a blank tab immediately on mobile to satisfy user-gesture requirement
-                const mobileEarly = isMobileDevice() ? window.open('about:blank', '_blank') : null;
+                const mobile = isMobileDevice();
+                const inApp = isInAppBrowser();
 
                 const formData = new FormData();
                 
@@ -402,6 +350,11 @@
                     formData.append('pages', pages);
                 }
 
+                // In in-app browsers on mobile, ask server to return a download URL
+                if (inApp && mobile) {
+                    formData.append('prefer_link', 'true');
+                }
+
                 const response = await fetch(currentTool.endpoint, {
                     method: 'POST',
                     body: formData
@@ -412,7 +365,19 @@
                     throw new Error(err.detail || 'Processing failed');
                 }
 
-                // Download the result
+                // If server provided a download URL, open it (preferred for in-app browsers)
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.download_url) {
+                        window.open(data.download_url, mobile ? '_blank' : '_self');
+                        successMsg.textContent = '✅ Done! If a new tab opens, use Share/Download to save.';
+                        successMsg.classList.remove('hidden');
+                        return;
+                    }
+                }
+
+                // Otherwise, proceed with blob-based download
                 const blob = await response.blob();
                 const contentDisposition = response.headers.get('Content-Disposition');
                 let filename = 'download';
@@ -422,10 +387,6 @@
                 }
 
                 const { os } = detectPlatform();
-                const mobile = isMobileDevice();
-
-                const { os } = detectPlatform();
-                const mobile = isMobileDevice();
 
                 // Prefer native share on mobile when available
                 if (mobile && ('canShare' in navigator) && ('share' in navigator)) {
@@ -435,53 +396,12 @@
                             await navigator.share({ files: [fileToShare], title: filename });
                             successMsg.textContent = '✅ Shared. Use Save to Files/Downloads in the share sheet.';
                             successMsg.classList.remove('hidden');
-                            if (mobileEarly) try { mobileEarly.close(); } catch (_) {}
                             return;
                         }
                     } catch (_) {
                         // fall through to new-tab navigation
                     }
                 }
-
-                // Fallback: navigate the pre-opened mobile tab to the blob, or trigger desktop download
-                const url = URL.createObjectURL(blob);
-                if (mobileEarly) {
-                    try {
-                        mobileEarly.location = url;
-                        mobileEarly.focus();
-                    } catch (_) {
-                        // If navigation fails, fallback to anchor method
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.target = '_blank';
-                        a.download = filename;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    }
-                } else {
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                }
-                URL.revokeObjectURL(url);
-
-                // Prefer native share on mobile when available
-                if (mobile && canShareFile(blob, filename)) {
-                    try {
-                        const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
-                        await navigator.share({ files: [file], title: filename });
-                        successMsg.textContent = '✅ Shared. Use Save to Files/Downloads in the share sheet.';
-                        successMsg.classList.remove('hidden');
-                        return;
-                    } catch (_) {
-                        // fall through to open-in-new-tab
-                    }
-                }
-
                 // Fallback: open in a new tab (mobile) or trigger download (desktop)
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');

@@ -7,6 +7,8 @@ No files are saved to disk.
 import io
 import zipfile
 from typing import List
+import uuid
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request, Form
 from fastapi.responses import StreamingResponse, HTMLResponse
@@ -34,6 +36,36 @@ app = FastAPI(title="PdfSuite", description="PDF Utilities Web App")
 
 # Templates for HTML rendering
 templates = Jinja2Templates(directory="app/templates")
+
+# Temporary in-memory store for download links (expires quickly)
+TEMP_STORE: dict[str, dict] = {}
+
+def store_download(bytes_data: bytes, mime_type: str, filename: str, minutes: int = 10) -> str:
+    token = uuid.uuid4().hex
+    TEMP_STORE[token] = {
+        "bytes": bytes_data,
+        "mime": mime_type,
+        "filename": filename,
+        "expires": datetime.utcnow() + timedelta(minutes=minutes),
+    }
+    return token
+
+@app.get("/download/{token}", name="download_token")
+async def download_token(token: str):
+    entry = TEMP_STORE.get(token)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Download link expired or invalid.")
+    if entry["expires"] < datetime.utcnow():
+        TEMP_STORE.pop(token, None)
+        raise HTTPException(status_code=404, detail="Download link expired.")
+    data = entry["bytes"]
+    mime = entry["mime"]
+    filename = entry["filename"]
+    # Remove after single use
+    TEMP_STORE.pop(token, None)
+    return StreamingResponse(io.BytesIO(data), media_type=mime, headers={
+        "Content-Disposition": f"attachment; filename={filename}"
+    })
 
 # --- Constants ---
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB per file
@@ -76,7 +108,7 @@ async def home(request: Request):
 
 
 @app.post("/api/merge")
-async def merge_pdfs(files: List[UploadFile] = File(...)):
+async def merge_pdfs(request: Request, files: List[UploadFile] = File(...), prefer_link: bool = Form(False)):
     """
     Merge multiple PDFs into one.
     All processing is done in-memory using BytesIO.
@@ -107,15 +139,15 @@ async def merge_pdfs(files: List[UploadFile] = File(...)):
     writer.write(output_buffer)
     output_buffer.seek(0)
 
-    return StreamingResponse(
-        output_buffer,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={output_filename}"}
-    )
+    if prefer_link:
+        token = store_download(output_buffer.getvalue(), "application/pdf", output_filename)
+        url = request.url_for("download_token", token=token)
+        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+    return StreamingResponse(output_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
 @app.post("/api/split")
-async def split_pdf(file: UploadFile = File(...), pages: str = Form(...)):
+async def split_pdf(request: Request, file: UploadFile = File(...), pages: str = Form(...), prefer_link: bool = Form(False)):
     """
     Split PDF by page ranges.
     Format: "1-3,5,7-10" extracts pages 1-3, 5, and 7-10.
@@ -165,15 +197,15 @@ async def split_pdf(file: UploadFile = File(...), pages: str = Form(...)):
             zf.writestr(f"pages_{start}-{end}.pdf", pdf_out.read())
 
     zip_buffer.seek(0)
-    return StreamingResponse(
-        zip_buffer,
-        media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename={output_filename}"}
-    )
+    if prefer_link:
+        token = store_download(zip_buffer.getvalue(), "application/zip", output_filename)
+        url = request.url_for("download_token", token=token)
+        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+    return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
 @app.post("/api/compress")
-async def compress_pdf(file: UploadFile = File(...)):
+async def compress_pdf(request: Request, file: UploadFile = File(...), prefer_link: bool = Form(False)):
     """
     Compress PDF to reduce file size.
     Uses PyMuPDF's deflate and garbage collection.
@@ -201,15 +233,15 @@ async def compress_pdf(file: UploadFile = File(...)):
     doc.close()
     output_buffer.seek(0)
 
-    return StreamingResponse(
-        output_buffer,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={output_filename}"}
-    )
+    if prefer_link:
+        token = store_download(output_buffer.getvalue(), "application/pdf", output_filename)
+        url = request.url_for("download_token", token=token)
+        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+    return StreamingResponse(output_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
 @app.post("/api/pdf-to-jpg")
-async def pdf_to_jpg(file: UploadFile = File(...)):
+async def pdf_to_jpg(request: Request, file: UploadFile = File(...), prefer_link: bool = Form(False)):
     """
     Convert each PDF page to a JPG image.
     Returns a ZIP containing all images.
@@ -236,15 +268,15 @@ async def pdf_to_jpg(file: UploadFile = File(...)):
     doc.close()
     zip_buffer.seek(0)
 
-    return StreamingResponse(
-        zip_buffer,
-        media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename={output_filename}"}
-    )
+    if prefer_link:
+        token = store_download(zip_buffer.getvalue(), "application/zip", output_filename)
+        url = request.url_for("download_token", token=token)
+        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+    return StreamingResponse(zip_buffer, media_type="application/zip", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
 @app.post("/api/pdf-to-word")
-async def pdf_to_word(file: UploadFile = File(...)):
+async def pdf_to_word(request: Request, file: UploadFile = File(...), prefer_link: bool = Form(False)):
     """
     Convert PDF to DOCX with high fidelity.
     Preserves: text, images, tables, alignment, fonts, colors, bold/italic.
@@ -453,15 +485,15 @@ async def pdf_to_word(file: UploadFile = File(...)):
     word_doc.save(output_buffer)
     output_buffer.seek(0)
 
-    return StreamingResponse(
-        output_buffer,
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f"attachment; filename={output_filename}"}
-    )
+    if prefer_link:
+        token = store_download(output_buffer.getvalue(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", output_filename)
+        url = request.url_for("download_token", token=token)
+        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+    return StreamingResponse(output_buffer, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
 @app.post("/api/word-to-pdf")
-async def word_to_pdf(file: UploadFile = File(...)):
+async def word_to_pdf(request: Request, file: UploadFile = File(...), prefer_link: bool = Form(False)):
     """
     Convert DOCX to PDF with high fidelity.
     Preserves: alignment, images, tables with borders, bullets, bold/italic, colors.
@@ -794,11 +826,11 @@ async def word_to_pdf(file: UploadFile = File(...)):
     c.save()
     output_buffer.seek(0)
 
-    return StreamingResponse(
-        output_buffer,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={output_filename}"}
-    )
+    if prefer_link:
+        token = store_download(output_buffer.getvalue(), "application/pdf", output_filename)
+        url = request.url_for("download_token", token=token)
+        return HTMLResponse(content=f'{"{"}"download_url"{"}"}:{"\""}{url}{"\""}}', media_type="application/json")
+    return StreamingResponse(output_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={output_filename}"})
 
 
 # --- Health Check ---
