@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +16,7 @@
     <!-- Header -->
     <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8">
         <div class="container mx-auto px-4 text-center">
-            <h1 class="text-4xl font-bold mb-2">📄 PdfSuite</h1>
+            <h1 class="text-4xl font-bold mb-2">ðŸ“„ PdfSuite</h1>
             <p class="text-blue-100">Free PDF Tools - All Processing Done Securely In Your Browser</p>
         </div>
     </header>
@@ -26,37 +26,37 @@
         <div id="tool-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             
             <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-blue-500" onclick="showTool('merge')">
-                <div class="text-4xl mb-3">🔗</div>
+                <div class="text-4xl mb-3">ðŸ”—</div>
                 <h3 class="text-xl font-semibold text-gray-800">Merge PDF</h3>
                 <p class="text-gray-500 text-sm mt-1">Combine multiple PDFs into one file</p>
             </div>
 
             <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-green-500" onclick="showTool('split')">
-                <div class="text-4xl mb-3">✂️</div>
+                <div class="text-4xl mb-3">âœ‚ï¸</div>
                 <h3 class="text-xl font-semibold text-gray-800">Split PDF</h3>
                 <p class="text-gray-500 text-sm mt-1">Extract specific pages or ranges</p>
             </div>
 
             <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-yellow-500" onclick="showTool('compress')">
-                <div class="text-4xl mb-3">📦</div>
+                <div class="text-4xl mb-3">ðŸ“¦</div>
                 <h3 class="text-xl font-semibold text-gray-800">Compress PDF</h3>
                 <p class="text-gray-500 text-sm mt-1">Reduce file size while keeping quality</p>
             </div>
 
             <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-purple-500" onclick="showTool('pdf-to-jpg')">
-                <div class="text-4xl mb-3">🖼️</div>
+                <div class="text-4xl mb-3">ðŸ–¼ï¸</div>
                 <h3 class="text-xl font-semibold text-gray-800">PDF to JPG</h3>
                 <p class="text-gray-500 text-sm mt-1">Convert each page to an image</p>
             </div>
 
             <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-red-500" onclick="showTool('pdf-to-word')">
-                <div class="text-4xl mb-3">📝</div>
+                <div class="text-4xl mb-3">ðŸ“</div>
                 <h3 class="text-xl font-semibold text-gray-800">PDF to Word</h3>
                 <p class="text-gray-500 text-sm mt-1">Convert PDF to editable DOCX</p>
             </div>
 
             <div class="tool-card bg-white rounded-xl p-6 shadow-md cursor-pointer border-2 border-transparent hover:border-teal-500" onclick="showTool('word-to-pdf')">
-                <div class="text-4xl mb-3">📑</div>
+                <div class="text-4xl mb-3">ðŸ“‘</div>
                 <h3 class="text-xl font-semibold text-gray-800">Word to PDF</h3>
                 <p class="text-gray-500 text-sm mt-1">Convert DOCX to PDF format</p>
             </div>
@@ -65,7 +65,7 @@
         <!-- Tool Forms (hidden by default) -->
         <div id="tool-form" class="hidden max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-8">
             <button onclick="goBack()" class="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-1">
-                <span>←</span> Back to tools
+                <span>â†</span> Back to tools
             </button>
 
             <h2 id="form-title" class="text-2xl font-bold text-gray-800 mb-6"></h2>
@@ -73,7 +73,7 @@
             <form id="upload-form" enctype="multipart/form-data">
                 <!-- File Upload Area -->
                 <div id="file-drop" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
-                    <div class="text-4xl mb-3">📁</div>
+                    <div class="text-4xl mb-3">ðŸ“</div>
                     <p class="text-gray-600 mb-2">Drag & drop files here or</p>
                     <label class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-blue-700">
                         Choose Files
@@ -126,7 +126,7 @@
         // Tool configurations
         const tools = {
             'merge': {
-                title: '🔗 Merge PDF',
+                title: 'ðŸ”— Merge PDF',
                 endpoint: '/api/merge',
                 accept: '.pdf',
                 multiple: true,
@@ -134,7 +134,7 @@
                 minFiles: 2
             },
             'split': {
-                title: '✂️ Split PDF',
+                title: 'âœ‚ï¸ Split PDF',
                 endpoint: '/api/split',
                 accept: '.pdf',
                 multiple: false,
@@ -142,7 +142,7 @@
                 minFiles: 1
             },
             'compress': {
-                title: '📦 Compress PDF',
+                title: 'ðŸ“¦ Compress PDF',
                 endpoint: '/api/compress',
                 accept: '.pdf',
                 multiple: false,
@@ -150,7 +150,7 @@
                 minFiles: 1
             },
             'pdf-to-jpg': {
-                title: '🖼️ PDF to JPG',
+                title: 'ðŸ–¼ï¸ PDF to JPG',
                 endpoint: '/api/pdf-to-jpg',
                 accept: '.pdf',
                 multiple: false,
@@ -158,7 +158,7 @@
                 minFiles: 1
             },
             'pdf-to-word': {
-                title: '📝 PDF to Word',
+                title: 'ðŸ“ PDF to Word',
                 endpoint: '/api/pdf-to-word',
                 accept: '.pdf',
                 multiple: false,
@@ -166,7 +166,7 @@
                 minFiles: 1
             },
             'word-to-pdf': {
-                title: '📑 Word to PDF',
+                title: 'ðŸ“‘ Word to PDF',
                 endpoint: '/api/word-to-pdf',
                 accept: '.docx',
                 multiple: false,
@@ -217,7 +217,7 @@
         function getDownloadLocationMessage() {
             const { os } = detectPlatform();
             if (os === 'iOS') {
-                return 'Saved to Files app → Downloads (or iCloud Drive → Downloads).';
+                return 'Saved to Files app â†’ Downloads (or iCloud Drive â†’ Downloads).';
             }
             if (os === 'Android') {
                 return 'Saved to the Downloads folder (check Files/Downloads).';
@@ -231,7 +231,7 @@
             if (os === 'Linux') {
                 return 'Saved to your Downloads folder (default browser location).';
             }
-            return 'Saved to your browser’s default Downloads folder.';
+            return 'Saved to your browserâ€™s default Downloads folder.';
         }
 
         const fileInput = document.getElementById('file-input');
@@ -290,7 +290,7 @@
             fileList.innerHTML = selectedFiles.map((f, i) => `
                 <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                     <span class="text-gray-700 truncate">${f.name}</span>
-                    <button type="button" onclick="removeFile(${i})" class="text-red-500 hover:text-red-700">✕</button>
+                    <button type="button" onclick="removeFile(${i})" class="text-red-500 hover:text-red-700">âœ•</button>
                 </div>
             `).join('');
 
@@ -324,7 +324,7 @@
         });
 
         // Form submission
-        uploadForm.addEventListener('submit', async (e) => {
+        uploadForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             errorMsg.classList.add('hidden');
@@ -333,19 +333,27 @@
             submitBtn.disabled = true;
 
             try {
-                const mobile = isMobileDevice();
-                const inApp = isInAppBrowser();
+                // Validate files first
+                if (!selectedFiles.length) {
+                    throw new Error('Please select a file');
+                }
+                if (currentTool.minFiles && selectedFiles.length < currentTool.minFiles) {
+                    throw new Error('Please select at least ' + currentTool.minFiles + ' file(s)');
+                }
+
+                var mobile = isMobileDevice();
+                var inApp = isInAppBrowser();
 
                 // In-app browser fallback: use fetch with simpler handling
                 if (inApp) {
                     if (currentTool.needsPages) {
-                        const pagesVal = document.getElementById('pages').value;
+                        var pagesVal = document.getElementById('pages').value;
                         if (!pagesVal.trim()) {
                             throw new Error('Please enter page ranges');
                         }
                     }
                     // Build FormData manually with selected files
-                    const fd = new FormData();
+                    var fd = new FormData();
                     if (currentTool.multiple) {
                         selectedFiles.forEach(function(f) { fd.append('files', f); });
                     } else {
@@ -381,11 +389,7 @@
                         if (navigator.share && navigator.canShare) {
                             var file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
                             if (navigator.canShare({ files: [file] })) {
-                                navigator.share({ files: [file], title: filename }).catch(function(err) {
-                                    // Share cancelled or failed, navigate to blob
-                                    var url = URL.createObjectURL(blob);
-                                    window.location.href = url;
-                                });
+                                navigator.share({ files: [file], title: filename });
                                 return;
                             }
                         }
@@ -396,77 +400,79 @@
                     }).catch(function(err) {
                         loading.classList.remove('active');
                         submitBtn.disabled = false;
-                        errorMsg.textContent = '❌ ' + (err.message || 'Processing failed. Please try again.');
+                        errorMsg.textContent = 'âŒ ' + (err.message || 'Processing failed. Please try again.');
                         errorMsg.classList.remove('hidden');
                     });
                     return;
                 }
 
-                const formData = new FormData();
-                
-                if (currentTool.multiple) {
-                    selectedFiles.forEach(f => formData.append('files', f));
-                } else {
-                    formData.append('file', selectedFiles[0]);
-                }
-
-                if (currentTool.needsPages) {
-                    const pages = document.getElementById('pages').value;
-                    if (!pages.trim()) {
-                        throw new Error('Please enter page ranges');
-                    }
-                    formData.append('pages', pages);
-                }
-
-                // For standard browsers, use fetch and client-side download
-
-                const response = await fetch(currentTool.endpoint, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || 'Processing failed');
-                }
-
-                // If server provided a download URL, open it (preferred for in-app browsers)
-                const contentType = response.headers.get('content-type') || '';
-                if (contentType.includes('application/json')) {
-                    const data = await response.json();
-                    if (data.download_url) {
-                        window.open(data.download_url, mobile ? '_blank' : '_self');
-                        successMsg.textContent = '✅ Done! If a new tab opens, use Share/Download to save.';
-                        successMsg.classList.remove('hidden');
-                        return;
-                    }
-                }
-
-                // Otherwise, proceed with blob-based download
-                const blob = await response.blob();
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'download';
-                if (contentDisposition) {
-                    const match = contentDisposition.match(/filename=([^;]+)/);
-                    if (match) filename = match[1].trim();
-                }
-
-                const { os } = detectPlatform();
-
-                // Prefer native share on mobile when available
-                if (mobile && ('canShare' in navigator) && ('share' in navigator)) {
+                // Standard browser path - wrap in async IIFE
+                (async function() {
                     try {
-                        const fileToShare = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
-                        if (navigator.canShare({ files: [fileToShare] })) {
-                            await navigator.share({ files: [fileToShare], title: filename });
-                            successMsg.textContent = '✅ Shared. Use Save to Files/Downloads in the share sheet.';
-                            successMsg.classList.remove('hidden');
-                            return;
+                        var formData = new FormData();
+                        
+                        if (currentTool.multiple) {
+                            selectedFiles.forEach(function(f) { formData.append('files', f); });
+                        } else {
+                            formData.append('file', selectedFiles[0]);
                         }
-                    } catch (_) {
-                        // fall through to new-tab navigation
-                    }
-                }
+
+                        if (currentTool.needsPages) {
+                            var pages = document.getElementById('pages').value;
+                            if (!pages.trim()) {
+                                throw new Error('Please enter page ranges');
+                            }
+                            formData.append('pages', pages);
+                        }
+
+                        var response = await fetch(currentTool.endpoint, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            var errData = await response.json();
+                            throw new Error(errData.detail || 'Processing failed');
+                        }
+
+                        // If server provided a download URL, open it
+                        var contentType = response.headers.get('content-type') || '';
+                        if (contentType.includes('application/json')) {
+                            var data = await response.json();
+                            if (data.download_url) {
+                                window.open(data.download_url, mobile ? '_blank' : '_self');
+                                successMsg.textContent = 'âœ… Done! If a new tab opens, use Share/Download to save.';
+                                successMsg.classList.remove('hidden');
+                                loading.classList.remove('active');
+                                submitBtn.disabled = false;
+                                return;
+                            }
+                        }
+
+                        var blob = await response.blob();
+                        var contentDisposition = response.headers.get('Content-Disposition');
+                        var filename = 'download';
+                        if (contentDisposition) {
+                            var match = contentDisposition.match(/filename=([^;]+)/);
+                            if (match) filename = match[1].trim();
+                        }
+
+                        var platform = detectPlatform();
+                        var os = platform.os;
+
+                        if (mobile && ('canShare' in navigator) && ('share' in navigator)) {
+                            try {
+                                var fileToShare = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+                                if (navigator.canShare({ files: [fileToShare] })) {
+                                    await navigator.share({ files: [fileToShare], title: filename });
+                                    successMsg.textContent = 'âœ… Shared. Use Save to Files/Downloads in the share sheet.';
+                                    successMsg.classList.remove('hidden');
+                                    loading.classList.remove('active');
+                                    submitBtn.disabled = false;
+                                    return;
+                                }
+                            } catch (_) {}
+                        }
                 // Fallback: open in a new tab (mobile) or trigger download (desktop)
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -483,14 +489,14 @@
                 // Show helpful message about where the file is typically saved
                 const mobileNote = mobile
                     ? (os === 'iOS'
-                        ? ' If it opens in a new tab, tap Share → Save to Files.'
-                        : ' If it opens in a new tab, use your browser’s Download/Save option to save it.')
+                        ? ' If it opens in a new tab, tap Share â†’ Save to Files.'
+                        : ' If it opens in a new tab, use your browserâ€™s Download/Save option to save it.')
                     : '';
-                successMsg.textContent = '✅ Done! ' + getDownloadLocationMessage() + mobileNote;
+                successMsg.textContent = 'âœ… Done! ' + getDownloadLocationMessage() + mobileNote;
                 successMsg.classList.remove('hidden');
 
             } catch (err) {
-                errorMsg.textContent = '❌ ' + err.message;
+                errorMsg.textContent = 'âŒ ' + err.message;
                 errorMsg.classList.remove('hidden');
             } finally {
                 loading.classList.remove('active');
@@ -500,3 +506,4 @@
     </script>
 </body>
 </html>
+
